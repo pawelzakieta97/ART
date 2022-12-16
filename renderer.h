@@ -9,10 +9,12 @@
 #include <memory>
 #include "light.h"
 #include <random>
+#include <chrono>
 
-float gaussCurve(float mean, float std, float x){
-    return 1/(std * sqrt(2 * M_PI)) * exp(-0.5*pow((x - mean)/std, 2));
-}
+
+// float gaussCurve(float mean, float std, float x){
+//     return 1/(std * sqrt(2 * M_PI)) * exp(-0.5*pow((x - mean)/std, 2));
+// }
 
 float colorBrightness(cv::Vec3d color){
     return pow((color.val[0] * color.val[0] + color.val[1] * color.val[1] + color.val[2] * color.val[2])/3, 0.5);
@@ -21,7 +23,7 @@ float colorBrightness(cv::Vec3d color){
 class Renderer{
     public:
         int maxBounces;
-        int samples = 10;
+        int samples = 20;
         std::vector<std::shared_ptr<Renderable>> objects;
         std::random_device rd{};
         std::mt19937 gen{rd()};
@@ -30,18 +32,32 @@ class Renderer{
         }
         std::vector<std::shared_ptr<Light>> lights;
 
-        void render(Camera camera, int samples=1){
-            auto rays = camera.project(samples);
-            cv::Mat image(camera.height, camera.width, CV_8UC3, cv::Scalar(0,0,0));
+        void render(Camera camera, int superSampling=1, int depth=3){
+            auto start = std::chrono::high_resolution_clock::now();
+            auto rays = camera.project(superSampling);
+            cv::Mat image(camera.height, camera.width, CV_64FC3, cv::Scalar(0,0,0));
             int i = 0;
+            int max_updates = 100;
+            int show_every = rays.size() / max_updates;
+            int ray_index = 0;
             for (Ray ray: rays){
-                int x = (i/samples) % camera.width;
-                int y = (i/samples) / camera.height;
-                auto min_color = shootRay(ray, 3);
-                image.at<cv::Vec3b>(cv::Point(x,y)) = min_color;
+                auto min_color = rayColor(ray, depth);
+                ray.color = min_color;
+                auto point_idx = camera.getPixelIndex(ray);
+                image.at<cv::Vec3d>(point_idx) = image.at<cv::Vec3d>(point_idx) + (min_color/superSampling/superSampling) * 255;
                 i += 1;
+                ray_index += 1;
+                if (ray_index % show_every == 0){
+                    cv::Mat img_show;
+                    image.convertTo(img_show, CV_8UC3);
+                    auto px2 = img_show.at<cv::Vec3d>(point_idx);
+                    cv::imshow("rendered image", img_show);
+                    cv::waitKey(1);
+                }
             }
-            cv::imshow("rendered image", image);
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end-start);
+            std::cout<<duration.count()<< std::endl;
             cv::waitKey(0);
         }
         void addObject(Renderable* object){
@@ -66,7 +82,7 @@ class Renderer{
             distance = min_distance;
             return minObject;
         }
-        cv::Vec3d shootRay(Ray ray, int bounces=1){
+        cv::Vec3d rayColor(Ray ray, int bounces=1){
             float min_distance;
             auto minObject = hit(ray, min_distance);
             if (minObject == nullptr){
@@ -82,43 +98,42 @@ class Renderer{
 
             cv::Vec3d color;
             for (auto light: lights){
-                Eigen::Vector3d p2l = light->position-hitLocation;
+                Eigen::Vector3d p2l = -light->getLightToPoint(hitLocation);
                 float distanceToLight = p2l.norm();
                 Ray point2light(hitLocation, p2l/distanceToLight, cv::Vec3d(1,1,1));
                 float distance;
                 if (hit(point2light, distance)==nullptr || distance > distanceToLight){
-                    // diffuse calculation
-                    float cosAngle = point2light.direction.dot(normal);
-                    if (cosAngle > 0) {
-                        color += light->getIntensity(hitLocation) * light->color.mul(hitColor) * cosAngle;
-                    }
-                    //specular
-                    cosAngle = point2light.direction.dot(reflectedRay.direction);
-                    // angle multiplier should integrate over all angles to 1 but who cares
-                    if (hitRoughness == 0) continue;
-                    // color += light->getIntensity(hitLocation) * light->color.mul(hitReflectiveness) * gaussCurve(1, hitRoughness, cosAngle);
-                    //color += cv::Vec3d(reflectedRay.direction.x()*127 + 127, reflectedRay.direction.x()*127 + 127, reflectedRay.direction.x()*127 + 127);
+                     Ray lightRay = light->getLightRay(hitLocation);
+                    auto phongColor = minObject -> material -> phong(ray, reflectedRay , normal, lightRay);
+                    color += phongColor;
                 }
                 
             }
             if (bounces > 1){
                 int diffuseSamples = colorBrightness(hitColor/255) / (colorBrightness(hitColor/255) + colorBrightness(hitReflectiveness)) * samples;
                 int specularSamples = samples - diffuseSamples;
+                diffuseSamples = 0;
+                specularSamples = 0;
                 //diffuseSamples = 0;
+                Ray scatteredRay = minObject -> scatter(ray, hitLocation);
+                color += scatteredRay.color.mul(rayColor(scatteredRay, bounces - 1));
+
+
                 for (int i=0; i<diffuseSamples; i++){
                     // diffuse secondary bounces
                     Ray diffuseRay = bounceSample(Ray(hitLocation, normal, cv::Vec3d(0, 0, 0)), normal, 1);
-                    color += (shootRay(diffuseRay, bounces - 1)/samples).mul(hitColor/255);
+                    
+                    color += (rayColor(diffuseRay, bounces - 1)/samples).mul(hitColor/255);
                 }
                 // specular secondary bounces
 
                 if (hitReflectiveness.val[0] || hitReflectiveness.val[1] || hitReflectiveness.val[2]){
                     for (int i=0; i<specularSamples; i++){
                         Ray specularRay = bounceSample(reflectedRay, normal, hitRoughness);
-                        color += (shootRay(specularRay, bounces - 1)/samples).mul(hitReflectiveness);
+                        color += (rayColor(specularRay, bounces - 1)/samples).mul(hitReflectiveness);
                     }
                 }
-                // calculate deeper bounces
+                
             }
             return color;
         }

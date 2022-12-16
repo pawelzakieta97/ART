@@ -33,6 +33,11 @@ class Sphere: public Renderable{
             }
             return false;
         }
+
+        // Ray scatter(Ray ray, const Eigen::Vector3d& hitPoint){
+        //     Ray scatteredRay  = material->scatter(ray, hitPoint, getNormal(hitPoint));
+        //     return scatteredRay;
+        // }
         Eigen::Vector3d getNormal(Eigen::Vector3d location){
             auto r = location - position;
             return r / r.norm();

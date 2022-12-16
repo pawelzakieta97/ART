@@ -34,32 +34,32 @@ class Cubemap: public Renderable{
             if (ray.direction.x() >= abs(ray.direction.y()) && ray.direction.x() >= abs(ray.direction.z())){
                 int y = (0.70710678118 - ray.direction.z())/1.41421356237 * height;
                 int x = (0.70710678118 - ray.direction.y())/1.41421356237 * height;
-                return cv::Vec3d(right.at<cv::Vec3b>(y, x));
+                return cv::Vec3d(right.at<cv::Vec3b>(y, x)) / 255.0;
             }
             else if (ray.direction.x() <= -abs(ray.direction.y()) && ray.direction.x() <= -abs(ray.direction.z())){
                 int y = (0.70710678118 - ray.direction.z())/1.41421356237 * height;
                 int x = (0.70710678118 + ray.direction.y())/1.41421356237 * height;
-                return cv::Vec3d(left.at<cv::Vec3b>(y, x));
+                return cv::Vec3d(left.at<cv::Vec3b>(y, x)) / 255.0;
             }
             else if (ray.direction.y() >= abs(ray.direction.x()) && ray.direction.y() >= abs(ray.direction.z())){
                 int y = (0.70710678118 - ray.direction.z())/1.41421356237 * height;
                 int x = (0.70710678118 + ray.direction.x())/1.41421356237 * height;
-                return cv::Vec3d(front.at<cv::Vec3b>(y, x));
+                return cv::Vec3d(front.at<cv::Vec3b>(y, x)) / 255.0;
             }
             else if (ray.direction.y() <= -abs(ray.direction.x()) && ray.direction.y() <= -abs(ray.direction.z())){
                 int y = (0.70710678118 - ray.direction.z())/1.41421356237 * height;
                 int x = (0.70710678118 - ray.direction.x())/1.41421356237 * height;
-                return cv::Vec3d(back.at<cv::Vec3b>(y, x));
+                return cv::Vec3d(back.at<cv::Vec3b>(y, x)) / 255.0;
             }
             else if (ray.direction.z() <= -abs(ray.direction.x()) && ray.direction.z() <= -abs(ray.direction.y())){
                 int y = (0.70710678118 - ray.direction.y())/1.41421356237 * height;
                 int x = (0.70710678118 + ray.direction.x())/1.41421356237 * height;
-                return cv::Vec3d(bottom.at<cv::Vec3b>(y, x));
+                return cv::Vec3d(bottom.at<cv::Vec3b>(y, x)) / 255.0;
             }
             else if (ray.direction.z() >= abs(ray.direction.x()) && ray.direction.z() >= abs(ray.direction.y())){
                 int y = (0.70710678118 + ray.direction.y())/1.41421356237 * height;
                 int x = (0.70710678118 + ray.direction.x())/1.41421356237 * height;
-                return cv::Vec3d(top.at<cv::Vec3b>(y, x));
+                return cv::Vec3d(top.at<cv::Vec3b>(y, x)) / 255.0;
             }
             return cv::Vec3d(0,0,0);
         }

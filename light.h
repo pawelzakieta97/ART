@@ -21,6 +21,13 @@ class Light{
         float getIntensity(Eigen::Vector3d location){
             return 1;
         }
+        Eigen::Vector3d getLightToPoint(Eigen::Vector3d point){
+            return point - position;
+        }
+        Ray getLightRay(Eigen::Vector3d location){
+            Eigen::Vector3d l2p = location - position;
+            return Ray(position, l2p / l2p.norm(), color * getIntensity(location));
+        }
 
 };
 
@@ -30,4 +37,18 @@ class PointLight: Light{
             float distance = (this->position - location).norm();
             return 1 / distance / distance;
         }
+};
+
+class SunLight: Light{
+    public:
+        float getIntensity(Eigen::Vector3d location){
+            return 1;
+        }
+        Eigen::Vector3d getLightToPoint(Eigen::Vector3d point){
+            return -position;
+        } 
+        Ray getLightRay(Eigen::Vector3d location){
+            Eigen::Vector3d l2p = - position;
+            return Ray(position, l2p / l2p.norm(), color * getIntensity(location));
+        }   
 };
