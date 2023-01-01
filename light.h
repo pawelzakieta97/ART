@@ -14,11 +14,12 @@ class Light{
     public:
         Eigen::Vector3d position;
         cv::Vec3d color;
+        Light(){}
         Light(Eigen::Vector3d position, cv::Vec3d color){
             this->position = position;
             this->color = color;
         }
-        float getIntensity(Eigen::Vector3d location){
+        virtual float getIntensity(Eigen::Vector3d location){
             return 1;
         }
         Eigen::Vector3d getLightToPoint(Eigen::Vector3d point){
@@ -31,8 +32,12 @@ class Light{
 
 };
 
-class PointLight: Light{
+class PointLight: public Light{
     public:
+        PointLight(Eigen::Vector3d position, cv::Vec3d color){
+            this->position = position;
+            this->color = color;
+        }
         float getIntensity(Eigen::Vector3d location){
             float distance = (this->position - location).norm();
             return 1 / distance / distance;

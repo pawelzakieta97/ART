@@ -52,4 +52,22 @@ class Camera{
             float y = relativeRayDirection.y() / relativeRayDirection.z() * f + height/2;
             return cv::Point(int(x), int(y));
         }
+        void rotateYaw(double angle){
+            Eigen::Transform<double, 3, Eigen::Affine> rot(Eigen::AngleAxisd(angle, Eigen::Vector3d(0, 0, 1)));
+            Eigen::Matrix4d t = Eigen::Matrix4d::Identity();
+            pose.block<3,3>(0,0) = rot*pose.block<3,3>(0,0);
+        }
+
+        void rotatePitch(double angle){
+            Eigen::Transform<double, 3, Eigen::Affine> rot(Eigen::AngleAxisd(angle, Eigen::Vector3d(1, 0, 0)));
+            Eigen::Matrix4d t = Eigen::Matrix4d::Identity();
+            pose.block<3,3>(0,0) = rot*pose.block<3,3>(0,0);
+        }
+
+        void move(double x, double y, double z){
+            pose.coeffRef(0, 3) +=  x;
+            pose.coeffRef(1, 3) += y;
+            pose.coeffRef(2, 3) += z;
+        }
+
 };

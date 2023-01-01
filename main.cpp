@@ -18,13 +18,16 @@ using namespace cv;
 int main( int argc, char** argv )
 {
     Eigen::Matrix4d pose = Eigen::Matrix4d::Identity();
-
-    std::cout << pose << std::endl;
-    Camera camera(pose, 400, 400, 200);
-    Eigen::Transform<double, 3, Eigen::Affine> rot(Eigen::AngleAxisd(-M_PI*0.5, Eigen::Vector3d(1, 0, 0)));
-    Eigen::Matrix4d t = Eigen::Matrix4d::Identity();
-    camera.pose.block<3,3>(0,0) = rot*camera.pose.block<3,3>(0,0);
     
+    std::cout << pose << std::endl;
+    // pose.coeffRef(2,3) += 10;
+    // std::cout << pose << std::endl;
+    Camera camera(pose, 400, 400, 200);
+
+    camera.rotatePitch(-M_PI*0.55);
+    camera.move(0, 0, 5);
+    // Eigen::Transform<double, 3, Eigen::Affine> rot(Eigen::AngleAxisd(-M_PI*0.5, Eigen::Vector3d(1, 0, 0)));
+    // camera.pose.block<3,3>(0,0) = rot*camera.pose.block<3,3>(0,0);
     Cubemap cubemap("skybox.png");
 
     Sphere sphere(Eigen::Vector3d(-3, 8, 0), 3);
@@ -38,7 +41,7 @@ int main( int argc, char** argv )
     sphere.setMaterial(&redDiffuse);
     sphere2.setMaterial(&mirror);
     plane.setMaterial(&gray);
-    Light pl(Eigen::Vector3d(-10,0,10), cv::Vec3d(2, 2 , 2));
+    PointLight pl(Eigen::Vector3d(-10,0,10), cv::Vec3d(200, 200 , 200));
     Renderer renderer(1);
     renderer.addLight(&pl);
     renderer.addObject(&cubemap);
@@ -46,26 +49,39 @@ int main( int argc, char** argv )
     renderer.addObject(&sphere2);
     renderer.addObject(&plane);
 
-    int numSpheres = 100;
+    int numSpheres = 20;
+    // Sphere * spheres;
+    // Material * materials;
     std::vector<Sphere> spheres;
     std::vector<Material> materials;
     for (int i=0; i<numSpheres; i++){
         double x = (randomDouble() - 0.5) * 100;
-        double y = randomDouble() * 100;
-        double z = (randomDouble()+1)*2;
+        // x = 0;
+        double y = randomDouble() * 100 + 10;
+        // y = 10;
         double roughness = randomDouble();
-        double r = randomDouble();
+        double R = (randomDouble()+1)*2;
+        // r = 5;
         double g = randomDouble();
+        double r = randomDouble();
         double b = randomDouble();
-        Sphere newSphere(Eigen::Vector3d(x, y, z), z);
-        Material newMaterial = Material(cv::Vec3d(r, g, b), cv::Vec3d(r, g, b), roughness);
-
-        newSphere.setMaterial(&newMaterial);
+        Sphere newSphere(Eigen::Vector3d(x, y, R-3), R);
+        Material newMaterial = Material(cv::Vec3d(r, g, b), cv::Vec3d(r, g, b), roughness*roughness*roughness);
         spheres.push_back(newSphere);
-        // renderer.addObject(&newSphere);
+        materials.push_back(newMaterial);
+        
+    }
+    auto it_sphere = spheres.begin();
+    auto it_material = materials.begin();
+    for(; it_sphere != spheres.cend(); ){
+        it_sphere -> setMaterial(&(*it_material));
+        renderer.addObject(&(*it_sphere));
+        it_sphere ++;
+        it_material ++;
     }
 
-    renderer.render(camera, 2);
+
+    renderer.render(camera, 1);
     
     return 0;
 }
