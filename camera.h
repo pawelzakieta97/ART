@@ -26,7 +26,7 @@ class Camera{
             rays = pose.block<3,3>(0,0) * rays;
             for (int i=0; i<width * height * superSampling * superSampling; i++){
                 // std::cout<<i<<std::endl;
-                v.push_back(Ray(pos, rays.block<3,1>(0, i), cv::Vec3d(1,1,1)));
+                v.push_back(Ray(pos, rays.block<3,1>(0, i), Eigen::Vector3d(1,1,1)));
             }
             return v;
         }

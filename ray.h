@@ -8,8 +8,8 @@ class Ray{
     public:
         Eigen::Vector3d start;
         Eigen::Vector3d direction;
-        cv::Vec3d color;
+        Eigen::Vector3d color;
         Ray();
-        Ray(Eigen::Vector3d start, Eigen::Vector3d direction, cv::Vec3d color);
+        Ray(Eigen::Vector3d start, Eigen::Vector3d direction, Eigen::Vector3d color);
         Eigen::Vector3d getHitLocation(float distance);
 };

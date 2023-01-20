@@ -13,19 +13,19 @@
 class Light{
     public:
         Eigen::Vector3d position;
-        cv::Vec3d color;
+        Eigen::Vector3d color;
         Light(){}
-        Light(Eigen::Vector3d position, cv::Vec3d color){
+        Light(Eigen::Vector3d position, Eigen::Vector3d color){
             this->position = position;
             this->color = color;
         }
         virtual float getIntensity(Eigen::Vector3d location){
             return 1;
         }
-        Eigen::Vector3d getLightToPoint(Eigen::Vector3d point){
+        virtual Eigen::Vector3d getLightToPoint(Eigen::Vector3d point){
             return point - position;
         }
-        Ray getLightRay(Eigen::Vector3d location){
+        virtual Ray getLightRay(Eigen::Vector3d location){
             Eigen::Vector3d l2p = location - position;
             return Ray(position, l2p / l2p.norm(), color * getIntensity(location));
         }
@@ -34,7 +34,7 @@ class Light{
 
 class PointLight: public Light{
     public:
-        PointLight(Eigen::Vector3d position, cv::Vec3d color){
+        PointLight(Eigen::Vector3d position, Eigen::Vector3d color){
             this->position = position;
             this->color = color;
         }
@@ -44,8 +44,12 @@ class PointLight: public Light{
         }
 };
 
-class SunLight: Light{
+class SunLight: public Light{
     public:
+        SunLight(Eigen::Vector3d position, Eigen::Vector3d color){
+            this->position = position;
+            this->color = color;
+        }
         float getIntensity(Eigen::Vector3d location){
             return 1;
         }
@@ -54,6 +58,6 @@ class SunLight: Light{
         } 
         Ray getLightRay(Eigen::Vector3d location){
             Eigen::Vector3d l2p = - position;
-            return Ray(position, l2p / l2p.norm(), color * getIntensity(location));
+            return Ray(position, l2p / l2p.norm(), color);
         }   
 };

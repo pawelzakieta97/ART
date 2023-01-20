@@ -17,7 +17,7 @@ class Renderable{
         }
 
         virtual Eigen::Vector3d getNormal(Eigen::Vector3d location){return Eigen::Vector3d(0,0,1);}
-        virtual cv::Vec3d getDiffuse(Eigen::Vector3d location){return material->diffuse;}
-        virtual cv::Vec3d getReflectiveness(Eigen::Vector3d location){return material->reflectiveness;}
+        virtual Eigen::Vector3d getDiffuse(Eigen::Vector3d location){return material->diffuse;}
+        virtual Eigen::Vector3d getReflectiveness(Eigen::Vector3d location){return material->reflectiveness;}
         virtual float getRoughness(Eigen::Vector3d location){return material->roughness;}
 };

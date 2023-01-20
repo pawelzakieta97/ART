@@ -27,7 +27,7 @@ class Plane: public Renderable{
             return normal;
         }
         // Ray scatter(Ray ray, const Eigen::Vector3d& hitPoint){
-        //     cv::Vec3d scatterTint;
+        //     Eigen::Vector3d scatterTint;
         //     Ray scatteredRay;
         //     scatteredRay.direction = material->scatter(ray, hitPoint, getNormal(hitPoint), scatterTint);
         //     scatteredRay.color = scatterTint;
